@@ -26,7 +26,10 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
     exists = db.query(User).filter(User.email == payload.email).first()
     if exists:
         raise HTTPException(status_code=400, detail="Email already registered")
-
+    exists_username = db.query(User).filter(User.username == payload.username).first()
+    if exists_username:
+        raise HTTPException(status_code=400, detail="Username already taken")
+    
     user = User(
         email=payload.email,
         username=payload.username,
