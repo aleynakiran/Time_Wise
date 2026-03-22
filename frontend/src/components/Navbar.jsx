@@ -3,10 +3,10 @@ import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Home", end: true },
-  { to: "/explore", label: "Explore", end: false },
-  { to: "/bookmarks", label: "Bookmarks", end: false },
-  { to: "/progress", label: "Progress", end: false },
+  { to: "/", label: "Dashboard", icon: "dashboard", end: true },
+  { to: "/explore", label: "Explore", icon: "explore", end: false },
+  { to: "/bookmarks", label: "Bookmarks", icon: "bookmark", end: false },
+  { to: "/progress", label: "Progress", icon: "analytics", end: false },
 ];
 
 export default function Navbar() {
@@ -20,27 +20,37 @@ export default function Navbar() {
       <nav className="nav nav-bar card" aria-label="Main">
         <Link to="/" className="logo-link">
           <span className="logo-mark" aria-hidden>
-            ◷
+            <span className="material-symbols-outlined" style={{ fontSize: "1.15rem" }}>
+              schedule
+            </span>
           </span>
-          <h1 className="logo">TimeWise</h1>
+          <div>
+            <h1 className="logo">TimeWise</h1>
+            <p className="sidebar-brand-sub">Power user mode</p>
+          </div>
         </Link>
 
         <div className="nav-links" role="navigation" aria-label="Primary">
-          {NAV_ITEMS.map(({ to, label, end }) => (
+          {NAV_ITEMS.map(({ to, label, icon, end }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
-              className={({ isActive }) =>
-                `nav-link${isActive ? " nav-link--active" : ""}`
-              }
+              className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}
             >
+              <span className="material-symbols-outlined" aria-hidden>
+                {icon}
+              </span>
               {label}
             </NavLink>
           ))}
         </div>
 
         <div className="nav-actions">
+          <Link to="/" className="sidebar-cta">
+            Start session
+          </Link>
+          <ThemeToggle />
           <button
             type="button"
             className="btn btn-nav-logout"
@@ -51,7 +61,6 @@ export default function Navbar() {
           >
             Log out
           </button>
-          <ThemeToggle />
         </div>
       </nav>
     </header>

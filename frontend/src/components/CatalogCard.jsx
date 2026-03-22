@@ -38,7 +38,7 @@ export default function CatalogCard({ content, onBookmark }) {
         <span className="chip">{content.content_type}</span>
         <span className="chip">{content.difficulty}</span>
       </div>
-      <div className="row catalog-card-actions">
+      <div className="catalog-card-actions">
         {youtubeId ? (
           <>
             <button

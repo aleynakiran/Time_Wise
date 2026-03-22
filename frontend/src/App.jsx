@@ -18,57 +18,99 @@ function Protected({ children }) {
   return children;
 }
 
-export default function App() {
+const TOPBAR_TITLES = {
+  "/": "Dashboard",
+  "/explore": "Explore",
+  "/bookmarks": "Bookmarks",
+  "/progress": "Progress",
+  "/onboarding": "Onboarding",
+};
+
+function AppTopBar() {
+  const { pathname } = useLocation();
+  const title = TOPBAR_TITLES[pathname] ?? "TimeWise";
   return (
-    <>
-      <Navbar />
+    <header className="app-topbar">
+      <div>
+        <p className="app-topbar__sub">Precision · TimeWise</p>
+        <h2 className="app-topbar__title">{title}</h2>
+      </div>
+    </header>
+  );
+}
+
+function AuthenticatedRoutes() {
+  return (
+    <Routes>
+      <Route
+        path="/onboarding"
+        element={
+          <Protected>
+            <Onboarding />
+          </Protected>
+        }
+      />
+      <Route
+        path="/"
+        element={
+          <Protected>
+            <Dashboard />
+          </Protected>
+        }
+      />
+      <Route
+        path="/explore"
+        element={
+          <Protected>
+            <Explore />
+          </Protected>
+        }
+      />
+      <Route
+        path="/bookmarks"
+        element={
+          <Protected>
+            <Bookmarks />
+          </Protected>
+        }
+      />
+      <Route
+        path="/progress"
+        element={
+          <Protected>
+            <Progress />
+          </Protected>
+        }
+      />
+      <Route path="/dashboard" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div className="page fade-up">Loading...</div>;
+
+  if (!user) {
+    return (
       <Routes>
         <Route path="/login" element={<Auth />} />
-        <Route
-          path="/onboarding"
-          element={
-            <Protected>
-              <Onboarding />
-            </Protected>
-          }
-        />
-        <Route
-          path="/"
-          element={
-            <Protected>
-              <Dashboard />
-            </Protected>
-          }
-        />
-        <Route
-          path="/explore"
-          element={
-            <Protected>
-              <Explore />
-            </Protected>
-          }
-        />
-        <Route
-          path="/bookmarks"
-          element={
-            <Protected>
-              <Bookmarks />
-            </Protected>
-          }
-        />
-        <Route
-          path="/progress"
-          element={
-            <Protected>
-              <Progress />
-            </Protected>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={<Navigate to="/" replace />}
-        />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-    </>
+    );
+  }
+
+  return (
+    <div className="app-shell">
+      <Navbar />
+      <main className="app-main">
+        <AppTopBar />
+        <div className="app-main__inner">
+          <AuthenticatedRoutes />
+        </div>
+      </main>
+    </div>
   );
 }

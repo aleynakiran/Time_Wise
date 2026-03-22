@@ -37,7 +37,7 @@ def dashboard(db: Session = Depends(get_db), current_user: User = Depends(get_cu
     completed_contents = db.query(Progress).filter(Progress.user_id == current_user.id, Progress.is_completed.is_(True)).count()
     bookmarked = db.query(Bookmark).filter(Bookmark.user_id == current_user.id).count()
     total_prog = db.query(Progress).filter(Progress.user_id == current_user.id).count()
-    completion_rate = round((completed_contents / total_prog) * 100, 2) if total_prog else 0.0 else 0.0
+    completion_rate = round((completed_contents / total_prog) * 100, 2) if total_prog else 0.0
 
     return DashboardOut(
         total_sessions=total_sessions,
