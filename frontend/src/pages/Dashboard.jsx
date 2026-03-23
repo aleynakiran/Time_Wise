@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import ContentCard from "../components/ContentCard";
+import { fireConfettiBurst } from "../lib/confetti";
 
 const MAX_MINUTES = 240;
 const quickMins = [15, 30, 45, 60, 75, 90, 105, 120];
@@ -20,26 +21,23 @@ const MODES = [
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [cont, setCont] = useState(null);
-  const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [session, setSession] = useState(null);
   const [recs, setRecs] = useState([]);
-  const [topics, setTopics] = useState([]);
+  const [sessionEarnings, setSessionEarnings] = useState({ xp: 0, minutes: 0, completed: 0 });
+  const [rewardBurst, setRewardBurst] = useState(null);
+  const [showSessionEndModal, setShowSessionEndModal] = useState(false);
+  const [sessionEndSnapshot, setSessionEndSnapshot] = useState({ xp: 0, minutes: 0, completed: 0 });
   const [goals, setGoals] = useState({ weeklyMinutes: 300, weeklyCompleted: 10 });
   const [form, setForm] = useState({
     available_minutes: 25,
     goal: "learn",
-    difficulty: "beginner",
-    selected_topic_id: null,
-    is_offline: false,
   });
 
   useEffect(() => {
     api.dashboardStats().then(setStats).catch(console.error);
     api.dashboardContinue().then(setCont).catch(() => setCont(null));
-    api.dashboardQueue().then(setQueue).catch(() => setQueue([]));
-    api.getUserTopics().then(setTopics).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -62,11 +60,57 @@ export default function Dashboard() {
     localStorage.setItem("tw_weekly_goals", JSON.stringify(goals));
   }, [goals]);
 
+  useEffect(() => {
+    if (!rewardBurst) return undefined;
+    fireConfettiBurst();
+    const t = setTimeout(() => setRewardBurst(null), 4000);
+    return () => clearTimeout(t);
+  }, [rewardBurst]);
+
+  useEffect(() => {
+    if (!showSessionEndModal) return undefined;
+    fireConfettiBurst();
+    const t = setTimeout(() => setShowSessionEndModal(false), 4000);
+    return () => clearTimeout(t);
+  }, [showSessionEndModal]);
+
+  const handleProgressAward = (award) => {
+    if (!award?.newlyCompleted) return;
+    const gainedMinutes = Number(award.gainedMinutes || 0);
+    const gainedXp = Number(award.gainedXp || 0);
+
+    setStats((prev) => {
+      if (!prev) return prev;
+      const total_xp = prev.total_xp + gainedXp;
+      const current_level = Math.max(1, Math.floor(total_xp / 100) + 1);
+      return {
+        ...prev,
+        total_minutes_spent: prev.total_minutes_spent + gainedMinutes,
+        total_xp,
+        current_level,
+        total_contents_completed: prev.total_contents_completed + 1,
+      };
+    });
+
+    setSessionEarnings((prev) => ({
+      xp: prev.xp + gainedXp,
+      minutes: prev.minutes + gainedMinutes,
+      completed: prev.completed + 1,
+    }));
+
+    setRewardBurst({
+      id: Date.now(),
+      gainedMinutes,
+      gainedXp,
+    });
+  };
+
   const createSession = async () => {
     setError("");
     setLoading(true);
     setRecs([]);
-    setQueue([]);
+    setSessionEarnings({ xp: 0, minutes: 0, completed: 0 });
+    setRewardBurst(null);
     try {
       const s = await api.createSession({
         ...form,
@@ -76,8 +120,6 @@ export default function Dashboard() {
       const items = await api.recommendations(s.id);
       const next = Array.isArray(items) ? items : [];
       setRecs(next);
-      // "Up next in queue" widget'ı recommendations'dan beslensin.
-      setQueue(next.slice(0, 5));
     } catch (e) {
       setError(e.message || "Could not load recommendations.");
       setSession(null);
@@ -96,6 +138,53 @@ export default function Dashboard() {
 
   return (
     <div className="page fade-up dashboard-page">
+      {rewardBurst && (
+        <div key={rewardBurst.id} className="dashboard-reward-pop" role="status" aria-live="polite">
+          <span className="dashboard-reward-pop__spark" aria-hidden>
+            ✨
+          </span>
+          <strong>Completed!</strong>
+          <span>
+            +{rewardBurst.gainedXp} XP · +{rewardBurst.gainedMinutes} min
+          </span>
+        </div>
+      )}
+
+      {showSessionEndModal && (
+        <div
+          className="dashboard-session-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="session-reward-title"
+        >
+          <div className="dashboard-session-modal">
+            <h2 id="session-reward-title" className="dashboard-session-modal__title">
+              Session rewards
+            </h2>
+            <p className="dashboard-session-modal__sub">
+              Here’s what you earned in this session (finished videos only).
+            </p>
+            <div className="dashboard-session-modal__stats">
+              <div>
+                <span className="muted">XP</span>
+                <strong>+{sessionEndSnapshot.xp}</strong>
+              </div>
+              <div>
+                <span className="muted">Minutes</span>
+                <strong>+{sessionEndSnapshot.minutes}</strong>
+              </div>
+              <div>
+                <span className="muted">Items completed</span>
+                <strong>{sessionEndSnapshot.completed}</strong>
+              </div>
+            </div>
+            <button type="button" className="btn dashboard-session-modal__btn" onClick={() => setShowSessionEndModal(false)}>
+              Nice!
+            </button>
+          </div>
+        </div>
+      )}
+
       <section className="dashboard-stats-row">
         <div className="card dashboard-stat-card hover-lift">
           <span className="dashboard-stat-icon" aria-hidden>
@@ -118,6 +207,13 @@ export default function Dashboard() {
           <span className="dashboard-stat-value">{stats.current_streak_days}</span>
           <span className="dashboard-stat-label muted">Day streak</span>
         </div>
+        <div className="card dashboard-stat-card hover-lift">
+          <span className="dashboard-stat-icon" aria-hidden>
+            ✨
+          </span>
+          <span className="dashboard-stat-value">{stats.total_xp}</span>
+          <span className="dashboard-stat-label muted">Total XP</span>
+        </div>
         <div className="card dashboard-goal-card hover-lift">
           <div className="row-between">
             <div className="dashboard-goal-head">
@@ -134,7 +230,7 @@ export default function Dashboard() {
               {goalLeague.toUpperCase()} LEAGUE
             </div>
             <div className="dashboard-goal-xp">
-              <span role="img" aria-label="sparkles">✨</span> +{Math.round((minutesGoalPct + completedGoalPct) / 4)} goal XP
+              <span role="img" aria-label="sparkles">✨</span> Level {stats.current_level} · {stats.total_xp} XP earned
             </div>
           </div>
           <div className="dashboard-goal-flames" aria-label={`Weekly streak flames ${flamesCount} of 5`}>
@@ -326,102 +422,41 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <label className="muted" style={{ fontSize: "0.85rem" }}>
-          Difficulty
-        </label>
-        <div className="row" style={{ marginTop: "0.35rem" }}>
-          {["beginner", "intermediate", "advanced"].map((d) => (
-            <button
-              key={d}
-              type="button"
-              className={`btn ${form.difficulty === d ? "" : "ghost"}`}
-              onClick={() => setForm({ ...form, difficulty: d })}
-            >
-              {d}
-            </button>
-          ))}
-        </div>
-
-        <label className="muted" style={{ fontSize: "0.85rem", marginTop: "0.5rem" }}>
-          Topic (optional)
-        </label>
-        <select
-          value={form.selected_topic_id || ""}
-          onChange={(e) =>
-            setForm({ ...form, selected_topic_id: e.target.value ? Number(e.target.value) : null })
-          }
-        >
-          <option value="">None</option>
-          {topics.map((t) => (
-            <option key={t.topic_id} value={t.topic_id}>
-              {t.topic.name}
-            </option>
-          ))}
-        </select>
-
-        <label className="row" style={{ marginTop: "0.5rem" }}>
-          <input
-            type="checkbox"
-            checked={form.is_offline}
-            onChange={(e) => setForm({ ...form, is_offline: e.target.checked })}
-          />
-          <span className="muted">İndirilebilir içerik</span>
-        </label>
-
-        <button
-          type="button"
-          className="btn dashboard-hero-cta"
-          onClick={createSession}
-          disabled={loading}
-          aria-label="Create a new recommendation session"
-        >
-          {loading ? "Loading…" : "Get recommendations"}
-        </button>
-        {error && <p className="error">{error}</p>}
-
-        {session && (
+        <div className="dashboard-hero-actions">
           <button
             type="button"
-            className="btn ghost"
-            onClick={async () => {
-              try {
-                await api.finishSession(session.id);
-              } finally {
-                setSession(null);
-                setRecs([]);
-              }
-            }}
+            className="btn dashboard-hero-cta"
+            onClick={createSession}
+            disabled={loading}
+            aria-label="Create a new recommendation session"
           >
-            End session
+            {loading ? "Loading…" : "Get recommendations"}
           </button>
-        )}
+          {session && (
+            <button
+              type="button"
+              className="btn ghost dashboard-hero-end"
+              onClick={async () => {
+                const snap = { ...sessionEarnings };
+                const sid = session.id;
+                try {
+                  if (sid) await api.finishSession(sid);
+                } catch (e) {
+                  console.warn(e);
+                } finally {
+                  setSessionEndSnapshot(snap);
+                  setShowSessionEndModal(true);
+                  setSession(null);
+                  setRecs([]);
+                }
+              }}
+            >
+              End session
+            </button>
+          )}
+        </div>
+        {error && <p className="error">{error}</p>}
       </section>
-
-      {queue.length > 0 && (
-        <section className="card dashboard-queue hover-lift" aria-labelledby="queue-heading">
-          <div className="row-between" style={{ alignItems: "center", marginBottom: "0.5rem" }}>
-            <h3 id="queue-heading" className="dashboard-queue-title">
-              Up next in queue
-            </h3>
-            <span className="chip">{queue.length} items</span>
-          </div>
-          <div className="dashboard-queue-list">
-            {queue.map((item) => (
-              <div className="dashboard-queue-item" key={item.id}>
-                <div>
-                  <strong>{item.content.title}</strong>
-                  <p className="muted" style={{ margin: "0.25rem 0 0", fontSize: "0.82rem" }}>
-                    {item.content.content_type} · {item.content.duration_minutes} min · rank #{item.rank}
-                  </p>
-                </div>
-                <Link className="btn ghost" to="/explore" aria-label={`Open ${item.content.title} in Explore`}>
-                  Open
-                </Link>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       <div className="dashboard-recs-head row-between">
         <h2 className="dashboard-recs-title">Recommendations</h2>
@@ -431,12 +466,12 @@ export default function Dashboard() {
       </div>
       <div className="grid">
         {recs.map((item) => (
-          <ContentCard key={item.id} item={item} onSaved={() => {}} />
+          <ContentCard key={item.id} item={item} onSaved={() => {}} onProgressAward={handleProgressAward} />
         ))}
       </div>
       {!loading && recs.length === 0 && !error && session && (
         <p className="muted">
-          No recommendations yet — try a longer window or adjust your filters.
+          No recommendations yet — try a longer time window or a different mode.
         </p>
       )}
 

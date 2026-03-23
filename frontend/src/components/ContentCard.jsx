@@ -3,7 +3,7 @@ import { api } from "../api";
 import YouTubePlayer from "./YouTubePlayer";
 import { tryParseYouTubeVideoId } from "../utils/youtube";
 
-export default function ContentCard({ item, onSaved }) {
+export default function ContentCard({ item, onSaved, onProgressAward }) {
   const { content } = item;
   const youtubeId = content.url ? tryParseYouTubeVideoId(content.url) : null;
   const [showYoutube, setShowYoutube] = useState(false);
@@ -77,7 +77,9 @@ export default function ContentCard({ item, onSaved }) {
           Save
         </button>
       </div>
-      {youtubeId && showYoutube && <YouTubePlayer videoId={youtubeId} contentId={content.id} />}
+      {youtubeId && showYoutube && (
+        <YouTubePlayer videoId={youtubeId} contentId={content.id} onProgressAward={onProgressAward} />
+      )}
     </div>
   );
 }

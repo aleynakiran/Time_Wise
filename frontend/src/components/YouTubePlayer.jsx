@@ -7,14 +7,14 @@ const MIN_DELTA = 5;
 
 /**
  * Inline YouTube player with IFrame API — reports progress to backend.
+ * Rewards (XP / minutes) are granted by the server only when the video is completed (100%).
  */
-export default function YouTubePlayer({ videoId, contentId }) {
+export default function YouTubePlayer({ videoId, contentId, onProgressAward }) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
   const pollRef = useRef(null);
   const lastSentRef = useRef(-1);
   const [loadError, setLoadError] = useState(null);
-  const [apiError, setApiError] = useState(null);
 
   const sendProgress = useCallback(
     async (pct) => {
@@ -28,13 +28,19 @@ export default function YouTubePlayer({ videoId, contentId }) {
       }
       lastSentRef.current = rounded;
       try {
-        await api.updateProgress(contentId, rounded);
-        setApiError(null);
+        const updated = await api.updateProgress(contentId, rounded);
+        if (updated?.newly_completed) {
+          onProgressAward?.({
+            gainedXp: Number(updated.gained_xp || 0),
+            gainedMinutes: Number(updated.gained_minutes || 0),
+            newlyCompleted: true,
+          });
+        }
       } catch (e) {
-        setApiError(e.message || "Could not save progress");
+        console.warn("Progress save failed (silent):", e?.message || e);
       }
     },
-    [contentId]
+    [contentId, onProgressAward]
   );
 
   const clearPoll = () => {
@@ -133,7 +139,7 @@ export default function YouTubePlayer({ videoId, contentId }) {
   return (
     <div className="youtube-player-block">
       <p className="muted" style={{ margin: "0 0 0.5rem", fontSize: "0.85rem" }}>
-        In-app playback — progress is saved. Some videos may block embedding.
+        In-app playback — progress is saved. Rewards apply when you finish the video. Some videos may block embedding.
       </p>
       <div className="youtube-player-wrap">
         <div ref={containerRef} className="youtube-player-mount" />
@@ -141,11 +147,6 @@ export default function YouTubePlayer({ videoId, contentId }) {
       {loadError && (
         <p className="error" style={{ marginTop: "0.5rem" }}>
           {loadError} — try &quot;Open in new tab&quot; to watch.
-        </p>
-      )}
-      {apiError && (
-        <p className="error" style={{ marginTop: "0.35rem" }}>
-          {apiError}
         </p>
       )}
     </div>

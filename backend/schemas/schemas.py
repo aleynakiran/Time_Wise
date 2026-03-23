@@ -158,6 +158,14 @@ class ProgressUpdateIn(BaseModel):
     completion_percentage: int = Field(ge=0, le=100)
 
 
+class ProgressUpdateOut(ProgressOut):
+    """PUT /progress — includes rewards only when content is newly completed (100%)."""
+
+    gained_xp: int = 0
+    gained_minutes: int = 0
+    newly_completed: bool = False
+
+
 class DashboardOut(BaseModel):
     total_sessions: int
     total_planned_minutes: int

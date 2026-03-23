@@ -62,7 +62,7 @@ export default function Onboarding() {
 
         <div className="onboarding-hero">
           <h1>
-            Personalize your <span style={{ color: "var(--primary)" }}>experience</span>
+            Personalize your <span className="text-gradient">experience</span>
           </h1>
           <p>
             Choose categories that align with your daily focus. We&apos;ll tailor your dashboard to prioritize what
@@ -83,7 +83,9 @@ export default function Onboarding() {
                 <span className="onboarding-topic-check material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
                   check_circle
                 </span>
-                <span className={`material-symbols-outlined topic-icon`}>{iconForTopic(topic.slug, i)}</span>
+                <span className="onboarding-topic-icon-wrap">
+                  <span className={`material-symbols-outlined topic-icon`}>{iconForTopic(topic.slug, i)}</span>
+                </span>
                 <strong>{topic.name}</strong>
                 <p>{topic.description}</p>
               </button>

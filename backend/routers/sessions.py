@@ -1,11 +1,15 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 
 from core.database import get_db
-from models.models import Content, Recommendation, SessionStatusEnum, TimeSession, User, UserStat
+from models.models import Content, ContentTopic, Recommendation, SessionStatusEnum, TimeSession, User, UserStat
 from routers.auth import get_current_user
 from schemas.schemas import RecommendationOut, SessionCreateIn, SessionOut
 from services.recommender import generate_recommendations
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -20,7 +24,11 @@ def create_session(
     db.add(session)
     db.commit()
     db.refresh(session)
-    generate_recommendations(db, session)
+    try:
+        generate_recommendations(db, session)
+    except Exception:
+        logger.exception("generate_recommendations failed for session %s", session.id)
+        db.rollback()
     return session
 
 
@@ -45,7 +53,10 @@ def list_recommendations(
         raise HTTPException(status_code=404, detail="Session not found")
     return (
         db.query(Recommendation)
-        .options(joinedload(Recommendation.content).joinedload(Content.author))
+        .options(
+            joinedload(Recommendation.content).joinedload(Content.author),
+            joinedload(Recommendation.content).joinedload(Content.topics).joinedload(ContentTopic.topic),
+        )
         .filter(Recommendation.session_id == session_id)
         .order_by(Recommendation.rank.asc())
         .all()

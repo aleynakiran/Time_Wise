@@ -1,7 +1,33 @@
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8001";
+function resolveApiBase() {
+  const fromEnv = import.meta.env.VITE_API_URL;
+  if (fromEnv && String(fromEnv).trim() !== "") {
+    return String(fromEnv).replace(/\/$/, "");
+  }
+  if (import.meta.env.DEV) {
+    return "/api";
+  }
+  return "http://localhost:8001";
+}
+
+const API_BASE = resolveApiBase();
 
 export function getToken() {
   return localStorage.getItem("tw_token");
+}
+
+function friendlyNetworkError(err) {
+  const msg = String(err?.message || err || "");
+  const lower = msg.toLowerCase();
+  if (
+    lower === "load failed" ||
+    lower === "failed to fetch" ||
+    lower.includes("networkerror") ||
+    lower.includes("network error") ||
+    lower === "network request failed"
+  ) {
+    return "Could not reach the API. Is the backend running? Check VITE_API_URL (default http://localhost:8001).";
+  }
+  return msg || "Network error";
 }
 
 async function request(path, options = {}) {
@@ -9,7 +35,12 @@ async function request(path, options = {}) {
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  } catch (e) {
+    throw new Error(friendlyNetworkError(e));
+  }
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     const detail = data?.detail;
@@ -49,7 +80,14 @@ async function request(path, options = {}) {
 
     throw new Error(message);
   }
-  return res.status === 204 ? null : res.json();
+  if (res.status === 204) return null;
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error("Invalid response from server.");
+  }
 }
 
 function buildQuery(params = {}) {

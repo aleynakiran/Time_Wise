@@ -6,8 +6,8 @@ const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    if (typeof window === "undefined") return "dark";
-    return window.localStorage.getItem(STORAGE_KEY) === "light" ? "light" : "dark";
+    if (typeof window === "undefined") return "light";
+    return window.localStorage.getItem(STORAGE_KEY) === "dark" ? "dark" : "light";
   });
 
   useEffect(() => {
