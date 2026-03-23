@@ -169,6 +169,15 @@ select {
 .btn:active {
   transform: scale(0.96);
 }
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 70%, #ffffff 30%);
+  outline-offset: 2px;
+}
 .btn.ghost {
   background: var(--btn-ghost-bg);
   color: var(--text);
@@ -535,6 +544,14 @@ select {
   align-items: start;
 }
 @media (max-width: 720px) {
+  .dashboard-goal-inputs,
+  .dashboard-goal-meters {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-queue-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
   .progress-charts-row {
     grid-template-columns: 1fr;
   }
@@ -840,6 +857,218 @@ select {
   flex-direction: column;
   gap: 0.25rem;
   align-items: flex-start;
+}
+.dashboard-goal-card {
+  grid-column: 1 / -1;
+  gap: 0.85rem;
+  padding: 1.15rem 1.2rem;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--card) 92%, transparent) 0%,
+    color-mix(in srgb, var(--surface-container-high) 70%, transparent) 100%
+  );
+  outline: 1px solid rgba(137, 172, 255, 0.14);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.dashboard-goal-title {
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.dashboard-goal-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.dashboard-goal-icon {
+  width: 1.55rem;
+  height: 1.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  outline: 1px solid rgba(137, 172, 255, 0.18);
+}
+.dashboard-goal-chips {
+  gap: 0.35rem;
+}
+.dashboard-goal-chips .chip {
+  font-size: 0.72rem;
+  padding: 0.18rem 0.5rem;
+  background: color-mix(in srgb, var(--surface-variant) 65%, var(--bg) 35%);
+}
+.dashboard-goal-streakline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+.dashboard-goal-league {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 0.22rem 0.55rem;
+  border: 1px solid transparent;
+}
+.dashboard-goal-league--bronze {
+  color: #f3c08a;
+  background: rgba(242, 153, 74, 0.16);
+  border-color: rgba(242, 153, 74, 0.3);
+}
+.dashboard-goal-league--silver {
+  color: #c7d2e9;
+  background: rgba(148, 163, 184, 0.16);
+  border-color: rgba(148, 163, 184, 0.32);
+}
+.dashboard-goal-league--gold {
+  color: #ffd66e;
+  background: rgba(255, 214, 110, 0.14);
+  border-color: rgba(255, 214, 110, 0.34);
+}
+.dashboard-goal-xp {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.dashboard-goal-flames {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.35rem 0.55rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-variant) 35%, transparent);
+  border: 1px solid rgba(137, 172, 255, 0.14);
+}
+.dashboard-goal-flames__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.dashboard-goal-flames__icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+.dashboard-goal-flame {
+  filter: grayscale(1) opacity(0.4);
+  transform: scale(0.95);
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+.dashboard-goal-flame.is-on {
+  filter: grayscale(0) opacity(1);
+  transform: scale(1);
+}
+.dashboard-goal-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 0.7rem;
+  width: 100%;
+  margin-top: 0.35rem;
+}
+.dashboard-goal-inputs label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.dashboard-goal-inputs input {
+  width: 100%;
+  min-height: 2.1rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  border-radius: 9px;
+}
+.dashboard-goal-inputs .muted {
+  font-size: 0.76rem;
+  letter-spacing: 0.02em;
+}
+.dashboard-goal-inputs .muted {
+  text-transform: uppercase;
+}
+.dashboard-goal-meters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+}
+.dashboard-goal-meters .progress-bar {
+  margin-top: 0.2rem;
+  height: 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-variant) 70%, var(--bg) 30%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 0 1px rgba(137, 172, 255, 0.12);
+}
+.dashboard-goal-meters .row-between .muted {
+  font-size: 0.78rem;
+}
+.dashboard-goal-meters .progress-fill {
+  position: relative;
+  border-radius: inherit;
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.dashboard-goal-meters > div:first-child .progress-fill {
+  background: linear-gradient(90deg, #58cc02 0%, #3fa600 48%, #2f8f01 100%);
+  box-shadow:
+    0 0 12px rgba(88, 204, 2, 0.3),
+    0 0 20px rgba(63, 166, 0, 0.22);
+}
+.dashboard-goal-meters > div:last-child .progress-fill {
+  background: linear-gradient(90deg, #1cb0f6 0%, #2d8cff 52%, #3568ff 100%);
+  box-shadow:
+    0 0 12px rgba(28, 176, 246, 0.24),
+    0 0 20px rgba(53, 104, 255, 0.2);
+}
+.dashboard-goal-meters .progress-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.06) 45%,
+    rgba(0, 0, 0, 0.12) 100%
+  );
+  pointer-events: none;
+}
+.dashboard-queue {
+  margin-bottom: 1rem;
+}
+.dashboard-queue-title {
+  margin: 0;
+  font-size: 1rem;
+}
+.dashboard-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.dashboard-queue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  background: var(--input-bg);
 }
 .dashboard-stat-icon {
   font-size: 1.25rem;

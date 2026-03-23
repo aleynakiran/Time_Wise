@@ -49,6 +49,7 @@ export const api = {
   dashboardStats: () => request("/dashboard/stats"),
   dashboardAchievements: () => request("/dashboard/achievements"),
   dashboardContinue: () => request("/dashboard/continue"),
+  dashboardQueue: () => request("/dashboard/queue"),
   dashboardWeekly: () => request("/dashboard/weekly-activity"),
   contents: (params) => request(`/contents${buildQuery(params)}`),
   achievementsVitrine: () => request("/achievements/vitrine"),

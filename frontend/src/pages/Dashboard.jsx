@@ -20,11 +20,13 @@ const MODES = [
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [cont, setCont] = useState(null);
+  const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [session, setSession] = useState(null);
   const [recs, setRecs] = useState([]);
   const [topics, setTopics] = useState([]);
+  const [goals, setGoals] = useState({ weeklyMinutes: 300, weeklyCompleted: 10 });
   const [form, setForm] = useState({
     available_minutes: 25,
     goal: "learn",
@@ -36,8 +38,29 @@ export default function Dashboard() {
   useEffect(() => {
     api.dashboardStats().then(setStats).catch(console.error);
     api.dashboardContinue().then(setCont).catch(() => setCont(null));
+    api.dashboardQueue().then(setQueue).catch(() => setQueue([]));
     api.getUserTopics().then(setTopics).catch(console.error);
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("tw_weekly_goals");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Number.isFinite(parsed?.weeklyMinutes) && Number.isFinite(parsed?.weeklyCompleted)) {
+        setGoals({
+          weeklyMinutes: Math.max(60, Math.min(1200, Number(parsed.weeklyMinutes))),
+          weeklyCompleted: Math.max(1, Math.min(200, Number(parsed.weeklyCompleted))),
+        });
+      }
+    } catch {
+      // Keep defaults if local storage is unavailable or malformed.
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("tw_weekly_goals", JSON.stringify(goals));
+  }, [goals]);
 
   const createSession = async () => {
     setError("");
@@ -62,6 +85,11 @@ export default function Dashboard() {
 
   if (!stats) return <div className="page">Loading…</div>;
 
+  const minutesGoalPct = Math.min(100, Math.round((stats.total_minutes_spent / goals.weeklyMinutes) * 100));
+  const completedGoalPct = Math.min(100, Math.round((stats.total_contents_completed / goals.weeklyCompleted) * 100));
+  const goalLeague = minutesGoalPct >= 100 && completedGoalPct >= 100 ? "gold" : minutesGoalPct >= 70 ? "silver" : "bronze";
+  const flamesCount = Math.max(1, Math.min(5, Math.ceil((minutesGoalPct + completedGoalPct) / 40)));
+
   return (
     <div className="page fade-up dashboard-page">
       <section className="dashboard-stats-row">
@@ -85,6 +113,97 @@ export default function Dashboard() {
           </span>
           <span className="dashboard-stat-value">{stats.current_streak_days}</span>
           <span className="dashboard-stat-label muted">Day streak</span>
+        </div>
+        <div className="card dashboard-goal-card hover-lift">
+          <div className="row-between">
+            <div className="dashboard-goal-head">
+              <span className="dashboard-goal-icon" aria-hidden>🎯</span>
+              <strong className="dashboard-goal-title">Weekly goals</strong>
+            </div>
+            <div className="chips dashboard-goal-chips">
+              <span className="chip">M: {goals.weeklyMinutes}</span>
+              <span className="chip">C: {goals.weeklyCompleted}</span>
+            </div>
+          </div>
+          <div className="dashboard-goal-streakline">
+            <div className={`dashboard-goal-league dashboard-goal-league--${goalLeague}`}>
+              {goalLeague.toUpperCase()} LEAGUE
+            </div>
+            <div className="dashboard-goal-xp">
+              <span role="img" aria-label="sparkles">✨</span> +{Math.round((minutesGoalPct + completedGoalPct) / 4)} goal XP
+            </div>
+          </div>
+          <div className="dashboard-goal-flames" aria-label={`Weekly streak flames ${flamesCount} of 5`}>
+            <span className="dashboard-goal-flames__label">Weekly streak</span>
+            <div className="dashboard-goal-flames__icons" aria-hidden>
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <span
+                  key={idx}
+                  className={`dashboard-goal-flame ${idx < flamesCount ? "is-on" : ""}`}
+                >
+                  🔥
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="dashboard-goal-inputs">
+            <label>
+              <span className="muted">Minutes target</span>
+              <input
+                aria-label="Weekly minutes target"
+                type="number"
+                min={60}
+                max={1200}
+                value={goals.weeklyMinutes}
+                onChange={(e) =>
+                  setGoals((g) => ({
+                    ...g,
+                    weeklyMinutes: Math.max(60, Math.min(1200, Number(e.target.value) || 60)),
+                  }))
+                }
+              />
+            </label>
+            <label>
+              <span className="muted">Completed target</span>
+              <input
+                aria-label="Weekly completed items target"
+                type="number"
+                min={1}
+                max={200}
+                value={goals.weeklyCompleted}
+                onChange={(e) =>
+                  setGoals((g) => ({
+                    ...g,
+                    weeklyCompleted: Math.max(1, Math.min(200, Number(e.target.value) || 1)),
+                  }))
+                }
+              />
+            </label>
+          </div>
+          <div className="dashboard-goal-meters">
+            <div>
+              <div className="row-between">
+                <span className="muted">Minutes progress</span>
+                <span className="muted">
+                  {stats.total_minutes_spent}/{goals.weeklyMinutes} ({minutesGoalPct}%)
+                </span>
+              </div>
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${minutesGoalPct}%` }} />
+              </div>
+            </div>
+            <div>
+              <div className="row-between">
+                <span className="muted">Completed progress</span>
+                <span className="muted">
+                  {stats.total_contents_completed}/{goals.weeklyCompleted} ({completedGoalPct}%)
+                </span>
+              </div>
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${completedGoalPct}%` }} />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -245,7 +364,13 @@ export default function Dashboard() {
           <span className="muted">Offline only</span>
         </label>
 
-        <button type="button" className="btn dashboard-hero-cta" onClick={createSession} disabled={loading}>
+        <button
+          type="button"
+          className="btn dashboard-hero-cta"
+          onClick={createSession}
+          disabled={loading}
+          aria-label="Create a new recommendation session"
+        >
           {loading ? "Loading…" : "Get recommendations"}
         </button>
         {error && <p className="error">{error}</p>}
@@ -267,6 +392,32 @@ export default function Dashboard() {
           </button>
         )}
       </section>
+
+      {queue.length > 0 && (
+        <section className="card dashboard-queue hover-lift" aria-labelledby="queue-heading">
+          <div className="row-between" style={{ alignItems: "center", marginBottom: "0.5rem" }}>
+            <h3 id="queue-heading" className="dashboard-queue-title">
+              Up next in queue
+            </h3>
+            <span className="chip">{queue.length} items</span>
+          </div>
+          <div className="dashboard-queue-list">
+            {queue.map((item) => (
+              <div className="dashboard-queue-item" key={item.id}>
+                <div>
+                  <strong>{item.content.title}</strong>
+                  <p className="muted" style={{ margin: "0.25rem 0 0", fontSize: "0.82rem" }}>
+                    {item.content.content_type} · {item.content.duration_minutes} min · rank #{item.rank}
+                  </p>
+                </div>
+                <Link className="btn ghost" to="/explore" aria-label={`Open ${item.content.title} in Explore`}>
+                  Open
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="dashboard-recs-head row-between">
         <h2 className="dashboard-recs-title">Recommendations</h2>

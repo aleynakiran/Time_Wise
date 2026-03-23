@@ -217,3 +217,14 @@ class WeeklyMinutesOut(BaseModel):
     day: date
     label: str  # e.g. Mon, Tue
     minutes: int
+
+
+class QueueItemOut(BaseModel):
+    """Compact recommendation item for dashboard queue widgets."""
+
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    score: float
+    rank: int
+    was_opened: bool
+    content: ContentOut

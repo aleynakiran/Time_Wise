@@ -47,15 +47,21 @@ export default function ContentCard({ item, onSaved }) {
               type="button"
               className="btn"
               onClick={() => setShowYoutube((s) => !s)}
+              aria-label={showYoutube ? `Hide player for ${content.title}` : `Play ${content.title} here`}
             >
               {showYoutube ? "Hide player" : "Play here"}
             </button>
-            <button type="button" className="btn ghost" onClick={openContent}>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={openContent}
+              aria-label={`Open ${content.title} in a new tab`}
+            >
               Open in new tab
             </button>
           </>
         ) : (
-          <button type="button" className="btn" onClick={openContent}>
+          <button type="button" className="btn" onClick={openContent} aria-label={`Open ${content.title}`}>
             Open
           </button>
         )}
@@ -66,6 +72,7 @@ export default function ContentCard({ item, onSaved }) {
             await api.addBookmark(content.id);
             onSaved?.();
           }}
+          aria-label={`Save ${content.title} to bookmarks`}
         >
           Save
         </button>

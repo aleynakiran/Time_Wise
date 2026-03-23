@@ -20,7 +20,7 @@ from models.models import (
     UserTopic,
 )
 from routers.auth import get_current_user
-from schemas.schemas import DashboardOut, DashboardStatsOut, ProgressOut, UserAchievementOut, WeeklyMinutesOut
+from schemas.schemas import DashboardOut, DashboardStatsOut, ProgressOut, QueueItemOut, UserAchievementOut, WeeklyMinutesOut
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -132,3 +132,34 @@ def weekly_activity(db: Session = Depends(get_db), current_user: User = Depends(
         wd = d.weekday()
         out.append(WeeklyMinutesOut(day=d, label=labels[wd], minutes=by_day.get(d, 0)))
     return out
+
+
+@router.get("/queue", response_model=list[QueueItemOut])
+def dashboard_queue(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Top unopened recommendations from the user's latest session."""
+    latest_session = (
+        db.query(TimeSession)
+        .filter(TimeSession.user_id == current_user.id)
+        .order_by(TimeSession.created_at.desc())
+        .first()
+    )
+    if not latest_session:
+        return []
+
+    return (
+        db.query(Recommendation)
+        .options(
+            joinedload(Recommendation.content).joinedload(Content.author),
+            joinedload(Recommendation.content).joinedload(Content.topics).joinedload(ContentTopic.topic),
+        )
+        .filter(
+            Recommendation.session_id == latest_session.id,
+            Recommendation.was_opened.is_(False),
+        )
+        .order_by(Recommendation.rank.asc(), Recommendation.id.asc())
+        .limit(5)
+        .all()
+    )
