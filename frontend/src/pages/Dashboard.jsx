@@ -66,6 +66,7 @@ export default function Dashboard() {
     setError("");
     setLoading(true);
     setRecs([]);
+    setQueue([]);
     try {
       const s = await api.createSession({
         ...form,
@@ -73,7 +74,10 @@ export default function Dashboard() {
       });
       setSession(s);
       const items = await api.recommendations(s.id);
-      setRecs(Array.isArray(items) ? items : []);
+      const next = Array.isArray(items) ? items : [];
+      setRecs(next);
+      // "Up next in queue" widget'ı recommendations'dan beslensin.
+      setQueue(next.slice(0, 5));
     } catch (e) {
       setError(e.message || "Could not load recommendations.");
       setSession(null);
@@ -361,7 +365,7 @@ export default function Dashboard() {
             checked={form.is_offline}
             onChange={(e) => setForm({ ...form, is_offline: e.target.checked })}
           />
-          <span className="muted">Offline only</span>
+          <span className="muted">İndirilebilir içerik</span>
         </label>
 
         <button
@@ -432,7 +436,7 @@ export default function Dashboard() {
       </div>
       {!loading && recs.length === 0 && !error && session && (
         <p className="muted">
-          No recommendations yet — try a longer window or turn off &quot;Offline only&quot;.
+          No recommendations yet — try a longer window or adjust your filters.
         </p>
       )}
 

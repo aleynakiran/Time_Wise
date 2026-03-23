@@ -77,9 +77,8 @@ export default function ContentCard({ item, onSaved }) {
           Save
         </button>
       </div>
-      {youtubeId && showYoutube && (
-        <YouTubePlayer videoId={youtubeId} contentId={content.id} />
-      )}
+      {youtubeId && showYoutube && <YouTubePlayer videoId={youtubeId} contentId={content.id} />}
     </div>
   );
 }
+

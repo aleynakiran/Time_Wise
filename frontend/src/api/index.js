@@ -12,7 +12,42 @@ async function request(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || "Request failed");
+    const detail = data?.detail;
+
+    let message = "Request failed";
+
+    // FastAPI validation errors usually return:
+    // { detail: [{ loc: [...], msg: "...", type: "..."}] }
+    if (typeof detail === "string") {
+      message = detail;
+    } else if (Array.isArray(detail)) {
+      const parts = [];
+
+      for (const d of detail) {
+        if (typeof d === "string") {
+          parts.push(d);
+          continue;
+        }
+
+        const loc = Array.isArray(d?.loc) ? d.loc : [];
+        const type = d?.type || "";
+
+        // Password min_length validation
+        if (loc.includes("password") && type === "string_too_short") {
+          const minLen = d?.ctx?.min_length;
+          parts.push(`Şifre en az ${minLen ?? 6} karakter olmalıdır.`);
+          continue;
+        }
+
+        if (d?.msg) parts.push(d.msg);
+      }
+
+      message = parts.length ? parts.join(", ") : message;
+    } else if (detail && typeof detail === "object") {
+      message = detail?.msg || detail?.message || JSON.stringify(detail);
+    }
+
+    throw new Error(message);
   }
   return res.status === 204 ? null : res.json();
 }

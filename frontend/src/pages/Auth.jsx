@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 
 export default function Auth() {
@@ -192,32 +191,6 @@ export default function Auth() {
               </span>
             </button>
 
-            <div className="auth-divider">
-              <span />
-              <span className="auth-divider__text">Or continue with</span>
-              <span />
-            </div>
-
-            <div className="auth-social">
-              <button type="button" className="auth-social-btn" title="Coming soon">
-                <img
-                  className="auth-social-btn__google"
-                  alt=""
-                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                  width={20}
-                  height={20}
-                />
-                Google
-              </button>
-              <button type="button" className="auth-social-btn" title="Coming soon">
-                <span className="material-symbols-outlined auth-social-btn__icon">terminal</span>
-                SSO
-              </button>
-            </div>
-
-            <div className="auth-theme-row">
-              <ThemeToggle />
-            </div>
           </form>
         </section>
       </main>

@@ -1198,6 +1198,20 @@ button:focus-visible {
   font-weight: 700;
   font-size: 0.95rem;
 }
+
+/* Light theme'de mode-card arka planları yarı şeffaf olduğu için
+   butonun varsayılan beyaz text rengi (#f0f2ff) görünmez olabiliyor. */
+[data-theme="light"] .btn.mode-card {
+  color: var(--text);
+}
+
+/* Light theme: seçili Learn kartını diğerleri gibi gri görünür yap */
+[data-theme="light"] .btn.mode-card.mode-card--learn.mode-card--active {
+  background: var(--btn-ghost-bg) !important;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: none;
+  outline: none;
+}
 .mode-card--learn {
   border: 1px solid rgba(129, 199, 245, 0.45);
   background: linear-gradient(145deg, rgba(129, 199, 245, 0.14), transparent);
@@ -1480,6 +1494,11 @@ button:focus-visible {
 }
 .auth-page--marketing {
   background: #0a1628;
+}
+[data-theme="light"] .auth-page--marketing {
+  /* Marketing login layout'unda sabit koyu arka plan var.
+     Light theme aktifken gözle görülür şekilde değişsin. */
+  background: var(--bg);
 }
 [data-theme="light"] .auth-page:not(.auth-page--marketing) {
   background: var(--surface-container-low);
