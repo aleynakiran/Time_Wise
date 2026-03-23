@@ -4,7 +4,8 @@ sqlalchemy
 psycopg[binary]
 python-jose[cryptography]
 passlib[bcrypt]
-bcrypt==4.0.1
+# passlib 1.7.x does not support bcrypt 4.x (backend init / verify can 500). Pin below 4.
+bcrypt==3.2.2
 pydantic
 pydantic-settings
 email-validator

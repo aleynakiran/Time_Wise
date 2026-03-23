@@ -42,10 +42,19 @@ async function request(path, options = {}) {
     throw new Error(friendlyNetworkError(e));
   }
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
+    const rawText = await res.text();
+    let data = {};
+    try {
+      data = rawText ? JSON.parse(rawText) : {};
+    } catch {
+      data = {};
+    }
     const detail = data?.detail;
 
     let message = "Request failed";
+    if (!detail && rawText && rawText.trim() && !rawText.trim().startsWith("{")) {
+      message = rawText.trim().slice(0, 200);
+    }
 
     // FastAPI validation errors usually return:
     // { detail: [{ loc: [...], msg: "...", type: "..."}] }
