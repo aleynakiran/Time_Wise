@@ -446,6 +446,7 @@ App runs at `http://localhost:5173`
 ## Screenshots
 
 ![Login](screenshots/login.jpeg)
+![Onboarding](screenshots/onboarding.jpeg)
 ![Dashboard](screenshots/dashboard1.jpeg)
 ![Recommendations](screenshots/dashboard2.jpeg)
-![Explore](screenshots/explore.jpeg)
+
