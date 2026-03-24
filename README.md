@@ -442,3 +442,10 @@ App runs at `http://localhost:5173`
 - **Typed SQLAlchemy ORM** — `Mapped[int]`, `mapped_column`, relationship lazy loading with `joinedload`
 - **Denormalized analytics cache** — `user_stats` updated on session complete / progress update
 - **Proper HTTP status codes** — 400 for business rule violations, 401 for auth, 404 for not found, 422 for validation
+
+## Screenshots
+
+![Login](screenshots/login.jpeg)
+![Dashboard](screenshots/dashboard1.jpeg)
+![Recommendations](screenshots/dashboard2.jpeg)
+![Explore](screenshots/explore.jpeg)
